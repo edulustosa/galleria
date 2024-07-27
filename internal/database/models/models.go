@@ -1,14 +1,17 @@
-package model
+package models
 
-import "time"
+import (
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+)
 
 type User struct {
-	ID                string
+	ID                uuid.UUID
 	Username          string
 	Email             string
 	PasswordHash      string
 	Bio               *string
 	ProfilePictureURL *string
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	CreatedAt         pgtype.Timestamp
+	UpdatedAt         pgtype.Timestamp
 }
