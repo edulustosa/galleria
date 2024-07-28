@@ -24,15 +24,19 @@ type RegisterRequest struct {
 	Password string `json:"password"`
 }
 
-func (a *Auth) Register(ctx context.Context, req *RegisterRequest) (uuid.UUID, error) {
+type RegisterResponse struct {
+	ID uuid.UUID `json:"id"`
+}
+
+func (a *Auth) Register(ctx context.Context, req *RegisterRequest) (*RegisterResponse, error) {
 	_, err := a.usersRepository.FindByEmail(ctx, req.Email)
 	if err == nil {
-		return uuid.UUID{}, errors.New("user already exists")
+		return nil, errors.New("user already exists")
 	}
 
 	passwordHashBytes, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return uuid.UUID{}, err
+		return nil, err
 	}
 
 	user := &models.User{
@@ -41,5 +45,10 @@ func (a *Auth) Register(ctx context.Context, req *RegisterRequest) (uuid.UUID, e
 		PasswordHash: string(passwordHashBytes),
 	}
 
-	return a.usersRepository.Create(ctx, user)
+	userId, err := a.usersRepository.Create(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &RegisterResponse{userId}, nil
 }

@@ -50,7 +50,16 @@ func (r *PGXUsersRepository) FindByEmail(ctx context.Context, email string) (*mo
 	row := r.db.QueryRow(ctx, findUserByEmail, email)
 
 	var user models.User
-	err := row.Scan(&user)
+	err := row.Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.PasswordHash,
+		&user.Bio,
+		&user.ProfilePictureURL,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
 
 	return &user, err
 }
