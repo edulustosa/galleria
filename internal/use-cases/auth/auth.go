@@ -5,16 +5,16 @@ import (
 	"errors"
 
 	"github.com/edulustosa/galleria/internal/database/models"
-	"github.com/edulustosa/galleria/internal/database/repositories"
+	"github.com/edulustosa/galleria/internal/database/repo"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Auth struct {
-	usersRepository repositories.UsersRepository
+	usersRepository repo.UsersRepository
 }
 
-func New(usersRepository repositories.UsersRepository) *Auth {
+func New(usersRepository repo.UsersRepository) *Auth {
 	return &Auth{usersRepository}
 }
 

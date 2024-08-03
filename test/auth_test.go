@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/edulustosa/galleria/internal/database/models"
-	"github.com/edulustosa/galleria/internal/database/repositories"
+	"github.com/edulustosa/galleria/internal/database/repo"
 	"github.com/edulustosa/galleria/internal/use-cases/auth"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -16,7 +16,7 @@ func TestAuth_Register(t *testing.T) {
 		t.Fatal("Failed to connect with database", err.Error())
 	}
 
-	usersRepository := repositories.NewPGXUsersRepository(dbpool)
+	usersRepository := repo.NewPGXUsersRepository(dbpool)
 	authUseCase := auth.New(usersRepository)
 
 	t.Run("user should be able to register", func(t *testing.T) {
@@ -75,7 +75,7 @@ func TestAuth_Login(t *testing.T) {
 		t.Fatal("Failed to connect with database", err.Error())
 	}
 
-	usersRepository := repositories.NewPGXUsersRepository(dbpool)
+	usersRepository := repo.NewPGXUsersRepository(dbpool)
 	authUseCase := auth.New(usersRepository)
 
 	t.Run("user should be able to authenticate", func(t *testing.T) {

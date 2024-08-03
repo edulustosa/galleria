@@ -4,10 +4,10 @@ Trata-se de uma galeria de arte online, basicamente um clone simples do Pinteres
 
 ## Funcionais
 
-- [ ] Permitir o cadastro de novos usuários.
-- [ ] Autenticação via login (e-mail/username e senha).
+- [x] Permitir o cadastro de novos usuários.
+- [x] Autenticação via login (e-mail/username e senha).
 - [ ] Opção de recuperação de senha.
-- [ ] Permitir que os usuários editem seus perfis (foto de perfil, bio, etc.).
+- [x] Permitir que os usuários editem seus perfis (foto de perfil, bio, etc.).
 - [ ] Exibir informações de perfil de outros usuários (nome, bio, imagens enviadas, etc.).
 - [ ] Permitir que os usuários cadastrados enviem imagens.
 - [ ] Formulário de envio com campos para título, descrição.

@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -28,4 +29,9 @@ func TruncateTables(db *pgxpool.Pool) error {
 	}
 
 	return nil
+}
+
+func PrettyPrint(data any) {
+	bytes, _ := json.MarshalIndent(data, "", "  ")
+	fmt.Println(string(bytes))
 }

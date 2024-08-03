@@ -1,4 +1,4 @@
-package repositories
+package repo
 
 import (
 	"context"
@@ -11,6 +11,8 @@ import (
 type UsersRepository interface {
 	Create(ctx context.Context, user *models.User) (uuid.UUID, error)
 	FindByEmail(ctx context.Context, email string) (*models.User, error)
+	FindByID(ctx context.Context, id uuid.UUID) (*models.User, error)
+	Update(ctx context.Context, user *models.User) error
 }
 
 type PGXUsersRepository struct {
@@ -62,4 +64,39 @@ func (r *PGXUsersRepository) FindByEmail(ctx context.Context, email string) (*mo
 	)
 
 	return &user, err
+}
+
+const findByIDQuery = "SELECT * FROM users WHERE id = $1;"
+
+func (r *PGXUsersRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
+	var user models.User
+	err := r.db.QueryRow(ctx, findByIDQuery, id).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.PasswordHash,
+		&user.Bio,
+		&user.ProfilePictureURL,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+
+	return &user, err
+}
+
+const update = `
+	UPDATE users
+	SET "username" = $1, "bio" = $2, "profile_picture_url" = $3
+	WHERE id = $4;
+`
+
+func (r *PGXUsersRepository) Update(ctx context.Context, user *models.User) error {
+	_, err := r.db.Exec(ctx, update,
+		user.Username,
+		user.Bio,
+		user.ProfilePictureURL,
+		user.ID,
+	)
+
+	return err
 }
