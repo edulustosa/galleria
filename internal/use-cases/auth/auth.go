@@ -52,3 +52,26 @@ func (a *Auth) Register(ctx context.Context, req *RegisterRequest) (*RegisterRes
 
 	return &RegisterResponse{userId}, nil
 }
+
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type LoginResponse struct {
+	ID uuid.UUID `json:"id"`
+}
+
+func (a *Auth) Login(ctx context.Context, req *LoginRequest) (*LoginResponse, error) {
+	user, err := a.usersRepository.FindByEmail(ctx, req.Email)
+	if err != nil {
+		return nil, errors.New("invalid credentials")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
+	if err != nil {
+		return nil, errors.New("invalid credentials")
+	}
+
+	return &LoginResponse{user.ID}, nil
+}
