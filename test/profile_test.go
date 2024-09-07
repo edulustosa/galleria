@@ -17,7 +17,8 @@ func TestAuth_Profile(t *testing.T) {
 	}
 
 	usersRepository := repo.NewPGXUsersRepository(dbpool)
-	profileService := profile.New(usersRepository)
+	imagesRepository := repo.NewPGXImagesRepo(dbpool)
+	profileService := profile.New(usersRepository, imagesRepository)
 
 	t.Run("user should be able to update profile", func(t *testing.T) {
 		if err = TruncateTables(dbpool); err != nil {

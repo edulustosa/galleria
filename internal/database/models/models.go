@@ -15,3 +15,15 @@ type User struct {
 	CreatedAt         pgtype.Timestamp
 	UpdatedAt         pgtype.Timestamp
 }
+
+type Image struct {
+	ID          uuid.UUID
+	UserID      uuid.UUID
+	Title       string
+	Author      *string
+	Description *string
+	URL         string
+	Likes       int
+	CreatedAt   pgtype.Timestamp
+	UpdatedAt   pgtype.Timestamp
+}

@@ -2,31 +2,37 @@ package profile
 
 import (
 	"context"
-	"errors"
 
+	"github.com/edulustosa/galleria/internal/database/models"
 	"github.com/edulustosa/galleria/internal/database/repo"
 	"github.com/google/uuid"
 )
 
 type Profile struct {
-	usersRepository repo.UsersRepository
+	usersRepository  repo.UsersRepository
+	imagesRepository repo.ImagesRepository
 }
 
-func New(usersRepository repo.UsersRepository) *Profile {
-	return &Profile{usersRepository}
+func New(usersRepository repo.UsersRepository, imagesRepository repo.ImagesRepository) *Profile {
+	return &Profile{
+		usersRepository,
+		imagesRepository,
+	}
 }
 
 type UpdateProfileRequest struct {
 	ID                uuid.UUID `json:"id"`
-	Username          *string   `json:"username"`
-	Bio               *string   `json:"bio"`
-	ProfilePictureURL *string   `json:"profilePictureURL"`
+	Username          *string   `json:"username,omitempty"`
+	Bio               *string   `json:"bio,omitempty"`
+	ProfilePictureURL *string   `json:"profilePictureURL,omitempty"`
 }
+
+var ErrInvalidCredentials error
 
 func (p *Profile) Update(ctx context.Context, req *UpdateProfileRequest) error {
 	user, err := p.usersRepository.FindByID(ctx, req.ID)
 	if err != nil {
-		return errors.New("invalid credentials")
+		return ErrInvalidCredentials
 	}
 
 	if req.Username != nil {
@@ -42,4 +48,22 @@ func (p *Profile) Update(ctx context.Context, req *UpdateProfileRequest) error {
 	}
 
 	return p.usersRepository.Update(ctx, user)
+}
+
+func (p *Profile) GetProfile(ctx context.Context, id uuid.UUID) (*models.User, error) {
+	user, err := p.usersRepository.FindByID(ctx, id)
+	if err != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	return user, nil
+}
+
+func (p *Profile) GetProfileImages(ctx context.Context, id uuid.UUID) ([]models.Image, error) {
+	images, err := p.imagesRepository.GetImagesByUserID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return images, nil
 }
