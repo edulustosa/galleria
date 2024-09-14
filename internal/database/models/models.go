@@ -27,3 +27,13 @@ type Image struct {
 	CreatedAt   pgtype.Timestamp
 	UpdatedAt   pgtype.Timestamp
 }
+
+type Comment struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	ImageID   uuid.UUID
+	Content   string
+	Likes     int
+	CreatedAt pgtype.Timestamp
+	UpdatedAt pgtype.Timestamp
+}
