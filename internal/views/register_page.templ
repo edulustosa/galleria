@@ -2,11 +2,11 @@ package views
 
 templ Register() {
 	@Layout("Register") {
-		<nav class="p-10 pr-12 absolute flex w-screen flex-row-reverse">
+		<nav hx-boost="true" class="p-10 pr-12 absolute flex w-screen flex-row-reverse">
 			<a href="/login" class="transition duration-100 hover:bg-neutral-100 rounded p-2 text-sm">Login</a>
 		</nav>
-		<main class="flex justify-center items-center h-screen">
-			<form action="/register" method="post" class="w-96 flex justify-center items-center h-screen flex-col gap-5">
+		<main class="flex justify-center h-screen items-center flex-col">
+			<form hx-post="/register" hx-swap="innerHTML" hx-target="#error-toast" class="w-96 flex justify-center items-center flex-col gap-5">
 				<div class="flex justify-center items-center flex-col gap-2">
 					<h1 class="font-semibold text-2xl text-neutral-900">Create an account</h1>
 					<p class="text-sm text-neutral-500">Enter your information below to create your account</p>
@@ -18,6 +18,7 @@ templ Register() {
 					<button type="submit" class="p-2 pl-3 rounded-md text-neutral-100 bg-neutral-900 w-full transition duration-100	 hover:opacity-85">Sign</button>
 				</div>
 			</form>
+			<div id="error-toast" class="flex mt-3 justify-center w-screen"></div>
 		</main>
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/edulustosa/galleria/internal/api"
+	"github.com/gorilla/sessions"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
@@ -50,7 +51,9 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	srv := api.NewServer(pool)
+	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+
+	srv := api.NewServer(pool, store)
 	httpServer := &http.Server{
 		Addr:         ":8080",
 		Handler:      srv,

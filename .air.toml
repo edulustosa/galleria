@@ -5,5 +5,5 @@ tmp_dir = "bin"
 pre_cmd = ["templ generate"]
 cmd = "go build -o ./bin/galleria ./cmd/galleria"
 bin = "bin/galleria"
-include_ext = ["templ", "css", "js"]
+include_ext = ["templ", "css", "js", "go"]
 exclude_regex = ["_templ\\.go"]

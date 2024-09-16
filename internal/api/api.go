@@ -6,10 +6,11 @@ import (
 	"github.com/edulustosa/galleria/internal/api/handler"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gorilla/sessions"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewServer(pool *pgxpool.Pool) http.Handler {
+func NewServer(pool *pgxpool.Pool, store *sessions.CookieStore) http.Handler {
 	r := chi.NewMux()
 
 	r.Use(
@@ -32,4 +33,5 @@ func addRoutes(r chi.Router, pool *pgxpool.Pool) {
 	r.Post("/register", handler.HandleRegister(pool))
 
 	r.Get("/login", handler.HandleLoginPage)
+	r.Post("/login", handler.HandleLogin(pool, store))
 }

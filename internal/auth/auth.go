@@ -91,7 +91,7 @@ type LoginRequest struct {
 	Password string
 }
 
-func (r LoginRequest) Valid() (problems map[string]string) {
+func (r *LoginRequest) Valid() (problems map[string]string) {
 	problems = make(map[string]string)
 
 	_, err := mail.ParseAddress(r.Email)
