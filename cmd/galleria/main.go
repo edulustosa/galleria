@@ -51,11 +51,11 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	store := sessions.NewCookieStore([]byte(os.Getenv("SESSION_SECRET")))
+	var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
 
 	srv := api.NewServer(pool, store)
 	httpServer := &http.Server{
-		Addr:         ":8080",
+		Addr:         ":3000",
 		Handler:      srv,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,

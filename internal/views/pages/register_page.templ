@@ -1,7 +1,9 @@
-package views
+package pages
+
+import "github.com/edulustosa/galleria/internal/views"
 
 templ Register() {
-	@Layout("Register") {
+	@views.Layout("Register") {
 		<nav hx-boost="true" class="p-10 pr-12 absolute flex w-screen flex-row-reverse">
 			<a href="/login" class="transition duration-100 hover:bg-neutral-100 rounded p-2 text-sm">Login</a>
 		</nav>

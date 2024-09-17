@@ -8,12 +8,12 @@ import (
 
 	"github.com/edulustosa/galleria/internal/auth"
 	"github.com/edulustosa/galleria/internal/database/repo"
-	"github.com/edulustosa/galleria/internal/views"
 	"github.com/edulustosa/galleria/internal/views/components"
+	"github.com/edulustosa/galleria/internal/views/pages"
 	"github.com/gorilla/sessions"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
+	
 type validator interface {
 	Valid() (problems map[string]string)
 }
@@ -27,7 +27,13 @@ func validate(v validator) (problems map[string]string, err error) {
 }
 
 func HandleRegisterPage(w http.ResponseWriter, r *http.Request) {
-	if err := views.Register().Render(r.Context(), w); err != nil {
+	if err := pages.Register().Render(r.Context(), w); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func renderErrAlert(w http.ResponseWriter, r *http.Request, errMsg string) {
+	if err := components.ErrAlert(errMsg).Render(r.Context(), w); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -50,11 +56,7 @@ func HandleRegister(pool *pgxpool.Pool) http.HandlerFunc {
 		problems, err := validate(req)
 		if err != nil {
 			for _, problem := range problems {
-				err := components.ErrAlert(problem).Render(r.Context(), w)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
+				renderErrAlert(w, r, problem)
 				return
 			}
 		}
@@ -62,11 +64,7 @@ func HandleRegister(pool *pgxpool.Pool) http.HandlerFunc {
 		_, err = authService.Register(r.Context(), req)
 		if err != nil {
 			if errors.Is(err, auth.ErrUserAlreadyExists) {
-				err := components.ErrAlert(err.Error()).Render(r.Context(), w)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
+				renderErrAlert(w, r, err.Error())
 				return
 			}
 
@@ -81,15 +79,12 @@ func HandleRegister(pool *pgxpool.Pool) http.HandlerFunc {
 }
 
 func HandleLoginPage(w http.ResponseWriter, r *http.Request) {
-	if err := views.Login().Render(r.Context(), w); err != nil {
+	if err := pages.Login().Render(r.Context(), w); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
-func HandleLogin(
-	pool *pgxpool.Pool,
-	store *sessions.CookieStore,
-) http.HandlerFunc {
+func HandleLogin(pool *pgxpool.Pool, store *sessions.CookieStore) http.HandlerFunc {
 	usersStore := repo.NewPGXUsersRepository(pool)
 	authService := auth.New(usersStore)
 
@@ -105,11 +100,7 @@ func HandleLogin(
 		problems, err := validate(req)
 		if err != nil {
 			for _, problem := range problems {
-				err := components.ErrAlert(problem).Render(r.Context(), w)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
+				renderErrAlert(w, r, problem)
 				return
 			}
 		}
@@ -117,11 +108,7 @@ func HandleLogin(
 		userID, err := authService.Login(r.Context(), req)
 		if err != nil {
 			if errors.Is(err, auth.ErrInvalidCredentials) {
-				err := components.ErrAlert(err.Error()).Render(r.Context(), w)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
+				renderErrAlert(w, r, err.Error())
 				return
 			}
 
@@ -130,14 +117,38 @@ func HandleLogin(
 			return
 		}
 
-		session, err := store.New(r, "session")
-		if err != nil {
+		session, _ := store.Get(r, "session")
+		opts := &sessions.Options{
+			MaxAge:   86400 * 7,
+			SameSite: http.SameSiteDefaultMode,
+			Path:     "/",
+			HttpOnly: true,
+		}
+		session.Options = opts
+
+		session.Values["authenticated"] = true
+		session.Values["user_id"] = userID.String()
+
+		if err := session.Save(r, w); err != nil {
+			log.Printf("failed to save session: %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		session.Values["userId"] = userID.ID
+		w.Header().Set("HX-Redirect", "/")
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func HandleLogout(store *sessions.CookieStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		session, _ := store.Get(r, "session")
+		session.Values["authenticated"] = false
+		session.Values["user_id"] = ""
+		session.Options.MaxAge = -1
+
 		if err := session.Save(r, w); err != nil {
+			log.Printf("failed to save session: %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

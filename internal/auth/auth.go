@@ -46,10 +46,6 @@ func (r *RegisterRequest) Valid() (problems map[string]string) {
 	return problems
 }
 
-type UserIDResponse struct {
-	ID uuid.UUID `json:"id"`
-}
-
 var (
 	ErrUserAlreadyExists  = errors.New("user already exists")
 	ErrInvalidCredentials = errors.New("invalid credentials")
@@ -58,10 +54,10 @@ var (
 func (a *Auth) Register(
 	ctx context.Context,
 	req *RegisterRequest,
-) (*UserIDResponse, error) {
+) (uuid.UUID, error) {
 	_, err := a.usersRepository.FindByEmail(ctx, req.Email)
 	if err == nil {
-		return nil, ErrUserAlreadyExists
+		return uuid.Nil, ErrUserAlreadyExists
 	}
 
 	passwordHashBytes, err := bcrypt.GenerateFromPassword(
@@ -69,7 +65,7 @@ func (a *Auth) Register(
 		bcrypt.DefaultCost,
 	)
 	if err != nil {
-		return nil, err
+		return uuid.Nil, err
 	}
 
 	user := &models.User{
@@ -78,12 +74,7 @@ func (a *Auth) Register(
 		PasswordHash: string(passwordHashBytes),
 	}
 
-	userId, err := a.usersRepository.Create(ctx, user)
-	if err != nil {
-		return nil, err
-	}
-
-	return &UserIDResponse{userId}, nil
+	return a.usersRepository.Create(ctx, user)
 }
 
 type LoginRequest struct {
@@ -106,13 +97,10 @@ func (r *LoginRequest) Valid() (problems map[string]string) {
 	return problems
 }
 
-func (a *Auth) Login(
-	ctx context.Context,
-	req *LoginRequest,
-) (*UserIDResponse, error) {
+func (a *Auth) Login(ctx context.Context, req *LoginRequest) (uuid.UUID, error) {
 	user, err := a.usersRepository.FindByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, ErrInvalidCredentials
+		return uuid.Nil, ErrInvalidCredentials
 	}
 
 	err = bcrypt.CompareHashAndPassword(
@@ -120,8 +108,8 @@ func (a *Auth) Login(
 		[]byte(req.Password),
 	)
 	if err != nil {
-		return nil, ErrInvalidCredentials
+		return uuid.Nil, ErrInvalidCredentials
 	}
 
-	return &UserIDResponse{user.ID}, nil
+	return user.ID, nil
 }
