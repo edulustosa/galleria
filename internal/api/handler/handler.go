@@ -8,12 +8,14 @@ import (
 
 	"github.com/edulustosa/galleria/internal/auth"
 	"github.com/edulustosa/galleria/internal/database/repo"
+	"github.com/edulustosa/galleria/internal/profile"
 	"github.com/edulustosa/galleria/internal/views/components"
 	"github.com/edulustosa/galleria/internal/views/pages"
+	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-	
+
 type validator interface {
 	Valid() (problems map[string]string)
 }
@@ -155,5 +157,50 @@ func HandleLogout(store *sessions.CookieStore) http.HandlerFunc {
 
 		w.Header().Set("HX-Redirect", "/")
 		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func getUserIdFromSession(r *http.Request, store *sessions.CookieStore) (uuid.UUID, error) {
+	session, err := store.Get(r, "session")
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	userIdStr, ok := session.Values["user_id"].(string)
+	if !ok {
+		return uuid.Nil, errors.New("failed to get user_id from session")
+	}
+
+	userId, err := uuid.Parse(userIdStr)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return userId, nil
+}
+
+func HandleProfilePage(pool *pgxpool.Pool, store *sessions.CookieStore) http.HandlerFunc {
+	usersRepository := repo.NewPGXUsersRepository(pool)
+	imagesRepository := repo.NewPGXImagesRepo(pool)
+	profileService := profile.New(usersRepository, imagesRepository)
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		userId, err := getUserIdFromSession(r, store)
+		if err != nil {
+			log.Printf("failed to get user_id from session: %v", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		user, err := profileService.GetProfile(r.Context(), userId)
+		if err != nil {
+			w.Header().Set("HX-Redirect", "/login")
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		if err := pages.Profile(user).Render(r.Context(), w); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }

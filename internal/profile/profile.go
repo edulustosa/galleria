@@ -2,6 +2,7 @@ package profile
 
 import (
 	"context"
+	"errors"
 
 	"github.com/edulustosa/galleria/internal/database/models"
 	"github.com/edulustosa/galleria/internal/database/repo"
@@ -13,7 +14,10 @@ type Profile struct {
 	imagesRepository repo.ImagesRepository
 }
 
-func New(usersRepository repo.UsersRepository, imagesRepository repo.ImagesRepository) *Profile {
+func New(
+	usersRepository repo.UsersRepository,
+	imagesRepository repo.ImagesRepository,
+) *Profile {
 	return &Profile{
 		usersRepository,
 		imagesRepository,
@@ -21,13 +25,13 @@ func New(usersRepository repo.UsersRepository, imagesRepository repo.ImagesRepos
 }
 
 type UpdateProfileRequest struct {
-	ID                uuid.UUID `json:"id"`
-	Username          *string   `json:"username,omitempty"`
-	Bio               *string   `json:"bio,omitempty"`
-	ProfilePictureURL *string   `json:"profilePictureURL,omitempty"`
+	ID                uuid.UUID
+	Username          *string
+	Bio               *string
+	ProfilePictureURL *string
 }
 
-var ErrInvalidCredentials error
+var ErrInvalidCredentials = errors.New("invalid credentials")
 
 func (p *Profile) Update(ctx context.Context, req *UpdateProfileRequest) error {
 	user, err := p.usersRepository.FindByID(ctx, req.ID)
@@ -55,6 +59,8 @@ func (p *Profile) GetProfile(ctx context.Context, id uuid.UUID) (*models.User, e
 	if err != nil {
 		return nil, ErrInvalidCredentials
 	}
+
+	user.PasswordHash = ""
 
 	return user, nil
 }

@@ -1,0 +1,15 @@
+package pages
+
+import (
+	"github.com/edulustosa/galleria/internal/database/models"
+	"github.com/edulustosa/galleria/internal/views"
+	"github.com/edulustosa/galleria/internal/views/components"
+)
+
+templ Profile(user *models.User) {
+	@views.Layout("Profile") {
+		<main>
+			@components.ProfilePicture(user.ProfilePictureURL)
+		</main>
+	}
+}

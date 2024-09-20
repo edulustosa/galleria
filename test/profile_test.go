@@ -6,7 +6,7 @@ import (
 
 	"github.com/edulustosa/galleria/internal/database/models"
 	"github.com/edulustosa/galleria/internal/database/repo"
-	"github.com/edulustosa/galleria/internal/use-cases/profile"
+	"github.com/edulustosa/galleria/internal/profile"
 	"golang.org/x/crypto/bcrypt"
 )
 

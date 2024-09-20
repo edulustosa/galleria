@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/edulustosa/galleria/internal/auth"
 	"github.com/edulustosa/galleria/internal/database/models"
 	"github.com/edulustosa/galleria/internal/database/repo"
-	"github.com/edulustosa/galleria/internal/auth"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -30,12 +30,12 @@ func TestAuth_Register(t *testing.T) {
 			Password: "12345678",
 		}
 
-		resp, err := authUseCase.Register(context.Background(), req)
+		userID, err := authUseCase.Register(context.Background(), req)
 		if err != nil {
 			t.Fatal("Failed to create user", err.Error())
 		}
 
-		t.Logf("User id: %v", resp.ID)
+		t.Logf("User id: %v", userID)
 	})
 
 	t.Run("user should not be able to register with same email", func(t *testing.T) {
@@ -96,11 +96,11 @@ func TestAuth_Login(t *testing.T) {
 			Password: "12345678",
 		}
 
-		resp, err := authUseCase.Login(context.Background(), req)
+		userID, err := authUseCase.Login(context.Background(), req)
 		if err != nil {
 			t.Fatal("Failed to authenticate", err.Error())
 		}
 
-		t.Log("Authenticated successfully, id:", resp.ID)
+		t.Log("Authenticated successfully, id:", userID)
 	})
 }

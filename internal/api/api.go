@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/edulustosa/galleria/internal/api/handler"
+	"github.com/edulustosa/galleria/internal/api/middlewares"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/sessions"
@@ -34,5 +35,13 @@ func addRoutes(r chi.Router, pool *pgxpool.Pool, store *sessions.CookieStore) {
 
 	r.Get("/login", handler.HandleLoginPage)
 	r.Post("/login", handler.HandleLogin(pool, store))
-	r.Post("/logout", handler.HandleLogout(store))
+	r.Get("/logout", handler.HandleLogout(store))
+
+	// Authenticated routes
+	r.Group(func(r chi.Router) {
+		r.Use(middlewares.AuthMiddleware(store))
+
+		r.Get("/profile", handler.HandleProfilePage(pool, store))
+		// r.Put("/profile", handler.HandleUpdateProfile(pool))
+	})
 }
