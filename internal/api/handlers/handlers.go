@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/edulustosa/galleria/internal/auth"
 	"github.com/edulustosa/galleria/internal/database/repo"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -65,10 +67,10 @@ func handleInvalidRequest(w http.ResponseWriter, problems map[string]string) {
 		errors = append(errors, Error{Message: "invalid input"})
 	}
 
-	handleError(w, http.StatusBadRequest, errors...)
+	HandleError(w, http.StatusBadRequest, errors...)
 }
 
-func handleError(w http.ResponseWriter, status int, err ...Error) {
+func HandleError(w http.ResponseWriter, status int, err ...Error) {
 	errList := ErrorList{Errors: err}
 	if err := encode(w, status, errList); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -93,12 +95,12 @@ func HandleRegister(pool *pgxpool.Pool) http.HandlerFunc {
 		userId, err := authService.Register(r.Context(), &req)
 		if err != nil {
 			if errors.Is(err, auth.ErrUserAlreadyExists) {
-				handleError(w, http.StatusConflict, Error{Message: err.Error()})
+				HandleError(w, http.StatusConflict, Error{Message: err.Error()})
 				return
 			}
 
 			log.Printf("failed to register user: %v", err)
-			handleError(
+			HandleError(
 				w,
 				http.StatusInternalServerError,
 				Error{Message: "something went wrong, please try again"},
@@ -113,7 +115,25 @@ func HandleRegister(pool *pgxpool.Pool) http.HandlerFunc {
 	}
 }
 
-func HandleLogin(pool *pgxpool.Pool) http.HandlerFunc {
+func createJWT(userId, jwtKey string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
+		jwt.MapClaims{
+			"sub": userId,
+			"exp": time.Now().Add(72 * time.Hour).Unix(),
+			"iat": time.Now().Unix(),
+			"nbf": time.Now().Unix(),
+		},
+	)
+
+	return token.SignedString([]byte(jwtKey))
+}
+
+type LoginResponse struct {
+	UserID string `json:"userId"`
+	Token  string `json:"token"`
+}
+
+func HandleLogin(pool *pgxpool.Pool, jwtKey string) http.HandlerFunc {
 	usersRepository := repo.NewPGXUsersRepository(pool)
 	authService := auth.New(usersRepository)
 
@@ -127,11 +147,25 @@ func HandleLogin(pool *pgxpool.Pool) http.HandlerFunc {
 		userId, err := authService.Login(r.Context(), &req)
 		if err != nil {
 			// The only error that can be returned is ErrInvalidCredentials
-			handleError(w, http.StatusUnauthorized, Error{Message: err.Error()})
+			HandleError(w, http.StatusUnauthorized, Error{Message: err.Error()})
 			return
 		}
 
-		resp := AuthResponse{UserID: userId.String()}
+		token, err := createJWT(userId.String(), jwtKey)
+		if err != nil {
+			log.Printf("failed to create token: %v", err)
+			HandleError(
+				w,
+				http.StatusInternalServerError,
+				Error{Message: "failed to create token"},
+			)
+			return
+		}
+
+		resp := LoginResponse{
+			UserID: userId.String(),
+			Token:  token,
+		}
 		if err = encode(w, http.StatusOK, resp); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}

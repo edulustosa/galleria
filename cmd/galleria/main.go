@@ -50,7 +50,8 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	srv := router.NewServer(pool)
+	jwtKey := os.Getenv("JWT_SECRET")
+	srv := router.NewServer(pool, jwtKey)
 	httpServer := &http.Server{
 		Addr:         ":8080",
 		Handler:      srv,
