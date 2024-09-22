@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/mail"
 
 	"github.com/edulustosa/galleria/internal/database/models"
@@ -22,12 +23,12 @@ func New(usersRepository repo.UsersRepository) *Auth {
 }
 
 type RegisterRequest struct {
-	Username string
-	Email    string
-	Password string
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
-func (r *RegisterRequest) Valid() (problems map[string]string) {
+func (r RegisterRequest) Valid() (problems map[string]string) {
 	problems = make(map[string]string)
 
 	_, err := mail.ParseAddress(r.Email)
@@ -82,12 +83,12 @@ type LoginRequest struct {
 	Password string
 }
 
-func (r *LoginRequest) Valid() (problems map[string]string) {
+func (r LoginRequest) Valid() (problems map[string]string) {
 	problems = make(map[string]string)
 
 	_, err := mail.ParseAddress(r.Email)
 	if err != nil {
-		problems["email"] = "invalid email"
+		problems["email"] = fmt.Sprintf("%s is not a valid email", r.Email)
 	}
 
 	if len(r.Password) < 8 || len(r.Password) > 128 {

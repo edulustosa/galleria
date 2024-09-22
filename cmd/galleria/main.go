@@ -10,8 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/edulustosa/galleria/internal/api"
-	"github.com/gorilla/sessions"
+	"github.com/edulustosa/galleria/internal/api/router"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
@@ -51,11 +50,9 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
-
-	srv := api.NewServer(pool, store)
+	srv := router.NewServer(pool)
 	httpServer := &http.Server{
-		Addr:         ":3000",
+		Addr:         ":8080",
 		Handler:      srv,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,
