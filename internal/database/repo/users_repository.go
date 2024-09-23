@@ -86,7 +86,7 @@ func (r *PGXUsersRepository) FindByID(ctx context.Context, id uuid.UUID) (*model
 
 const update = `
 	UPDATE users
-	SET "username" = $1, "bio" = $2, "profile_picture_url" = $3
+	SET "username" = $1, "bio" = $2, "profile_picture_url" = $3, "updated_at" = NOW()
 	WHERE id = $4;
 `
 

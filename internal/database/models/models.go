@@ -6,34 +6,34 @@ import (
 )
 
 type User struct {
-	ID                uuid.UUID
-	Username          string
-	Email             string
-	PasswordHash      string
-	Bio               *string
-	ProfilePictureURL *string
-	CreatedAt         pgtype.Timestamp
-	UpdatedAt         pgtype.Timestamp
+	ID                uuid.UUID        `json:"id"`
+	Username          string           `json:"username"`
+	Email             string           `json:"email"`
+	PasswordHash      string           `json:"-"`
+	Bio               *string          `json:"bio"`
+	ProfilePictureURL *string          `json:"profilePictureURL"`
+	CreatedAt         pgtype.Timestamp `json:"createdAt"`
+	UpdatedAt         pgtype.Timestamp `json:"updatedAt"`
 }
 
 type Image struct {
-	ID          uuid.UUID
-	UserID      uuid.UUID
-	Title       string
-	Author      *string
-	Description *string
-	URL         string
-	Likes       int
-	CreatedAt   pgtype.Timestamp
-	UpdatedAt   pgtype.Timestamp
+	ID          uuid.UUID        `json:"id"`
+	UserID      uuid.UUID        `json:"userId"`
+	Title       string           `json:"title"`
+	Author      *string          `json:"author"`
+	Description *string          `json:"description"`
+	URL         string           `json:"url"`
+	Likes       int              `json:"likes"`
+	CreatedAt   pgtype.Timestamp `json:"createdAt"`
+	UpdatedAt   pgtype.Timestamp `json:"updatedAt"`
 }
 
 type Comment struct {
-	ID        uuid.UUID
-	UserID    uuid.UUID
-	ImageID   uuid.UUID
-	Content   string
-	Likes     int
-	CreatedAt pgtype.Timestamp
-	UpdatedAt pgtype.Timestamp
+	ID        uuid.UUID        `json:"id"`
+	UserID    uuid.UUID        `json:"userId"`
+	ImageID   uuid.UUID        `json:"imageId"`
+	Content   string           `json:"content"`
+	Likes     int              `json:"likes"`
+	CreatedAt pgtype.Timestamp `json:"createdAt"`
+	UpdatedAt pgtype.Timestamp `json:"updatedAt"`
 }

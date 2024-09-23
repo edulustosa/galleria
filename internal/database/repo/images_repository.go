@@ -16,7 +16,7 @@ type PGXImagesRepo struct {
 	db *pgxpool.Pool
 }
 
-func NewPGXImagesRepo(db *pgxpool.Pool) ImagesRepository {
+func NewPGXImagesRepository(db *pgxpool.Pool) ImagesRepository {
 	return &PGXImagesRepo{
 		db,
 	}

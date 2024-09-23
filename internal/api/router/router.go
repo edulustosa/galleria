@@ -32,8 +32,8 @@ func addRoutes(r chi.Router, pool *pgxpool.Pool, jwtKey string) {
 	r.Group(func(r chi.Router) {
 		r.Use(middlewares.JWTAuthMiddleware([]byte(jwtKey)))
 
-		r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("pong"))
-		})
+		r.Get("/profile", handlers.HandleGetUserProfile(pool))
+		r.Get("/profile/images", handlers.HandleGetUserImages(pool))
+		r.Patch("/profile", handlers.HandleUpdateProfile(pool))
 	})
 }

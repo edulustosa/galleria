@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/edulustosa/galleria/internal/api/handlers"
+	"github.com/edulustosa/galleria/internal/api"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 func getTokenFromAuthorizationHeader(r *http.Request) (string, error) {
@@ -38,19 +39,15 @@ func verifyClaims(token *jwt.Token) (string, error) {
 	return "", errors.New("invalid claims")
 }
 
-type ContextKey string
-
-const UserIDKey ContextKey = "userID"
-
 func JWTAuthMiddleware(jwtKey []byte) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tokenString, err := getTokenFromAuthorizationHeader(r)
 			if err != nil {
-				handlers.HandleError(
+				api.HandleError(
 					w,
 					http.StatusUnauthorized,
-					handlers.Error{Message: err.Error()},
+					api.Error{Message: err.Error()},
 				)
 				return
 			}
@@ -62,25 +59,35 @@ func JWTAuthMiddleware(jwtKey []byte) func(http.Handler) http.Handler {
 				return jwtKey, nil
 			})
 			if err != nil {
-				handlers.HandleError(
+				api.HandleError(
 					w,
 					http.StatusUnauthorized,
-					handlers.Error{Message: "invalid token", Details: err.Error()},
+					api.Error{Message: "invalid token", Details: err.Error()},
 				)
 				return
 			}
 
 			userID, err := verifyClaims(token)
 			if err != nil {
-				handlers.HandleError(
+				api.HandleError(
 					w,
 					http.StatusUnauthorized,
-					handlers.Error{Message: "invalid token", Details: err.Error()},
+					api.Error{Message: "invalid token", Details: err.Error()},
 				)
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), UserIDKey, userID)
+			parsedUserID, err := uuid.Parse(userID)
+			if err != nil {
+				api.HandleError(
+					w,
+					http.StatusInternalServerError,
+					api.Error{Message: "internal server error", Details: err.Error()},
+				)
+				return
+			}
+
+			ctx := context.WithValue(r.Context(), api.UserIDKey, parsedUserID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

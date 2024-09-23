@@ -3,6 +3,7 @@ package profile
 import (
 	"context"
 	"errors"
+	"net/url"
 
 	"github.com/edulustosa/galleria/internal/database/models"
 	"github.com/edulustosa/galleria/internal/database/repo"
@@ -25,16 +26,42 @@ func New(
 }
 
 type UpdateProfileRequest struct {
-	ID                uuid.UUID
-	Username          *string
-	Bio               *string
-	ProfilePictureURL *string
+	Username          *string `json:"username"`
+	Bio               *string `json:"bio"`
+	ProfilePictureURL *string `json:"avatar"`
+}
+
+func (r UpdateProfileRequest) Valid() (problems map[string]string) {
+	problems = make(map[string]string)
+
+	if r.Username != nil && (len(*r.Username) < 3 || len(*r.Username) > 32) {
+		problems["username"] = "must be between 3 and 32 characters long"
+	}
+
+	if r.Bio != nil && len(*r.Bio) > 500 {
+		problems["bio"] = "must be between 8 and 500 characters long"
+	}
+
+	if r.ProfilePictureURL != nil {
+		parsedURL, err := url.Parse(*r.ProfilePictureURL)
+		if err != nil {
+			problems["profilePictureURL"] = "invalid URL"
+		} else if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+			problems["profilePictureURL"] = "must be a valid HTTP or HTTPS url"
+		}
+	}
+
+	return problems
 }
 
 var ErrInvalidCredentials = errors.New("invalid credentials")
 
-func (p *Profile) Update(ctx context.Context, req *UpdateProfileRequest) error {
-	user, err := p.usersRepository.FindByID(ctx, req.ID)
+func (p *Profile) Update(
+	ctx context.Context,
+	id uuid.UUID,
+	req *UpdateProfileRequest,
+) error {
+	user, err := p.usersRepository.FindByID(ctx, id)
 	if err != nil {
 		return ErrInvalidCredentials
 	}
@@ -59,8 +86,6 @@ func (p *Profile) GetProfile(ctx context.Context, id uuid.UUID) (*models.User, e
 	if err != nil {
 		return nil, ErrInvalidCredentials
 	}
-
-	user.PasswordHash = ""
 
 	return user, nil
 }

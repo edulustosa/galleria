@@ -17,7 +17,7 @@ func TestAuth_Profile(t *testing.T) {
 	}
 
 	usersRepository := repo.NewPGXUsersRepository(dbpool)
-	imagesRepository := repo.NewPGXImagesRepo(dbpool)
+	imagesRepository := repo.NewPGXImagesRepository(dbpool)
 	profileService := profile.New(usersRepository, imagesRepository)
 
 	t.Run("user should be able to update profile", func(t *testing.T) {
@@ -38,13 +38,12 @@ func TestAuth_Profile(t *testing.T) {
 		profilePictureURL := "http://my_url.com"
 
 		update := &profile.UpdateProfileRequest{
-			ID:                userID,
 			Username:          &newUsername,
 			Bio:               &bio,
 			ProfilePictureURL: &profilePictureURL,
 		}
 
-		err := profileService.Update(context.Background(), update)
+		err := profileService.Update(context.Background(), userID, update)
 		if err != nil {
 			t.Fatal("Failed to update user:", err.Error())
 		}
@@ -69,11 +68,10 @@ func TestAuth_Profile(t *testing.T) {
 		bio := "This is the new bio"
 
 		update := &profile.UpdateProfileRequest{
-			ID:  userID,
 			Bio: &bio,
 		}
 
-		err := profileService.Update(context.Background(), update)
+		err := profileService.Update(context.Background(), userID, update)
 		if err != nil {
 			t.Fatal("Failed to update user:", err.Error())
 		}
