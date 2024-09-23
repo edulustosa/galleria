@@ -6,8 +6,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/edulustosa/galleria/internal/database/models"
+	"github.com/edulustosa/galleria/internal/database/repo"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func LoadDatabase() (*pgxpool.Pool, error) {
@@ -31,7 +35,19 @@ func TruncateTables(db *pgxpool.Pool) error {
 	return nil
 }
 
-func PrettyPrint(data any) {
-	bytes, _ := json.MarshalIndent(data, "", "  ")
-	fmt.Println(string(bytes))
+func PrettyPrint(data ...any) {
+	for _, d := range data {
+		b, _ := json.MarshalIndent(d, "", "  ")
+		fmt.Println(string(b))
+	}
+}
+
+func SignUpUser(usersRepository repo.UsersRepository) (uuid.UUID, error) {
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("12345678"), bcrypt.DefaultCost)
+
+	return usersRepository.Create(context.Background(), &models.User{
+		Username:     "john doe",
+		Email:        "johndoe@email.com",
+		PasswordHash: string(hashedPassword),
+	})
 }
