@@ -12,6 +12,8 @@ type ImagesRepository interface {
 	Create(ctx context.Context, image *models.Image) (uuid.UUID, error)
 	GetImageByID(ctx context.Context, imageID uuid.UUID) (*models.Image, error)
 	GetImagesByUserID(ctx context.Context, userID uuid.UUID) ([]models.Image, error)
+
+	FindMany(ctx context.Context, page uint64) ([]models.Image, error)
 }
 
 type PGXImagesRepository struct {
@@ -116,4 +118,47 @@ func (r *PGXImagesRepository) GetImageByID(
 	}
 
 	return &image, nil
+}
+
+const findManyQuery = `
+	SELECT * FROM images
+	ORDER BY "likes"
+	LIMIT $1
+	OFFSET $2;
+`
+
+const ITEMS_PER_PAGE = 20
+
+func (r *PGXImagesRepository) FindMany(ctx context.Context, page uint64) ([]models.Image, error) {
+	skip := (page - 1) * ITEMS_PER_PAGE
+
+	rows, err := r.db.Query(ctx, findManyQuery, ITEMS_PER_PAGE, skip)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var images []models.Image
+	for rows.Next() {
+		var image models.Image
+
+		err := rows.Scan(
+			&image.ID,
+			&image.UserID,
+			&image.Title,
+			&image.Author,
+			&image.Description,
+			&image.URL,
+			&image.Likes,
+			&image.CreatedAt,
+			&image.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		images = append(images, image)
+	}
+
+	return images, nil
 }

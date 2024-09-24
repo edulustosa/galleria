@@ -6,6 +6,7 @@ import (
 
 	"github.com/edulustosa/galleria/internal/database/repo"
 	"github.com/edulustosa/galleria/internal/galleria"
+	"github.com/google/uuid"
 )
 
 func TestGalleria(t *testing.T) {
@@ -51,4 +52,27 @@ func TestGalleria(t *testing.T) {
 
 		PrettyPrint(image)
 	})
+
+	t.Run(
+		"users should not be able to send a image with a wrong id",
+		func(t *testing.T) {
+			if err = TruncateTables(pool); err != nil {
+				t.Fatalf("failed to truncate tables: %v", err)
+			}
+
+			req := &galleria.SendImageRequest{
+				Title: "image title",
+				URL:   "http://image.com",
+			}
+
+			_, err := sut.SendImage(testCtx, uuid.New(), req)
+			if err == nil {
+				t.Fatalf("expected error, got nil")
+			}
+
+			if err.Error() != galleria.ErrUserNotFound.Error() {
+				t.Errorf("unexpected error: %v", err)
+			}
+		},
+	)
 }

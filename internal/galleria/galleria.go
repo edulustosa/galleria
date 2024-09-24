@@ -2,6 +2,7 @@ package galleria
 
 import (
 	"context"
+	"errors"
 
 	"github.com/edulustosa/galleria/helpers"
 	"github.com/edulustosa/galleria/internal/database/models"
@@ -27,10 +28,7 @@ func New(
 	}
 }
 
-// Unimplemented method
-func (g *Galleria) Display(ctx context.Context) ([]models.Image, error) {
-	return nil, nil
-}
+var ErrUserNotFound = errors.New("user not found")
 
 type SendImageRequest struct {
 	Title       string  `json:"title"`
@@ -66,6 +64,11 @@ func (g *Galleria) SendImage(
 	userId uuid.UUID,
 	req *SendImageRequest,
 ) (imageId uuid.UUID, err error) {
+	_, err = g.usersRepository.FindByID(ctx, userId)
+	if err != nil {
+		return uuid.Nil, ErrUserNotFound
+	}
+
 	image := &models.Image{
 		Title:       req.Title,
 		UserID:      userId,
