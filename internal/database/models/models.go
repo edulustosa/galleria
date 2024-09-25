@@ -28,6 +28,12 @@ type Image struct {
 	UpdatedAt   pgtype.Timestamp `json:"updatedAt"`
 }
 
+type Post struct {
+	Image    Image   `json:"image"`
+	Username string  `json:"username"`
+	Avatar   *string `json:"avatar"`
+}
+
 type Comment struct {
 	ID        uuid.UUID        `json:"id"`
 	UserID    uuid.UUID        `json:"userId"`

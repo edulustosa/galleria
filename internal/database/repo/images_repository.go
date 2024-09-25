@@ -10,10 +10,16 @@ import (
 
 type ImagesRepository interface {
 	Create(ctx context.Context, image *models.Image) (uuid.UUID, error)
-	GetImageByID(ctx context.Context, imageID uuid.UUID) (*models.Image, error)
-	GetImagesByUserID(ctx context.Context, userID uuid.UUID) ([]models.Image, error)
+	GetImageByID(
+		ctx context.Context,
+		imageID uuid.UUID,
+	) (*models.Image, error)
+	GetImagesByUserID(
+		ctx context.Context,
+		userID uuid.UUID,
+	) ([]models.Image, error)
 
-	FindMany(ctx context.Context, page uint64) ([]models.Image, error)
+	FindMany(ctx context.Context, page uint64) ([]models.Post, error)
 }
 
 type PGXImagesRepository struct {
@@ -121,15 +127,31 @@ func (r *PGXImagesRepository) GetImageByID(
 }
 
 const findManyQuery = `
-	SELECT * FROM images
-	ORDER BY "likes"
+	SELECT
+		images.id,
+		images.user_id,
+		images.title,
+		images.author,
+		images.description,
+		images.url,
+		images.likes,
+		images.created_at,
+		images.updated_at,
+		users.username,
+		users.profile_picture_url
+	FROM images
+	JOIN users ON images.user_id = users.id
+	ORDER BY images.likes
 	LIMIT $1
 	OFFSET $2;
 `
 
 const ITEMS_PER_PAGE = 20
 
-func (r *PGXImagesRepository) FindMany(ctx context.Context, page uint64) ([]models.Image, error) {
+func (r *PGXImagesRepository) FindMany(
+	ctx context.Context,
+	page uint64,
+) ([]models.Post, error) {
 	skip := (page - 1) * ITEMS_PER_PAGE
 
 	rows, err := r.db.Query(ctx, findManyQuery, ITEMS_PER_PAGE, skip)
@@ -138,8 +160,9 @@ func (r *PGXImagesRepository) FindMany(ctx context.Context, page uint64) ([]mode
 	}
 	defer rows.Close()
 
-	var images []models.Image
+	var posts []models.Post
 	for rows.Next() {
+		var post models.Post
 		var image models.Image
 
 		err := rows.Scan(
@@ -152,13 +175,16 @@ func (r *PGXImagesRepository) FindMany(ctx context.Context, page uint64) ([]mode
 			&image.Likes,
 			&image.CreatedAt,
 			&image.UpdatedAt,
+			&post.Username,
+			&post.Avatar,
 		)
 		if err != nil {
 			return nil, err
 		}
 
-		images = append(images, image)
+		post.Image = image
+		posts = append(posts, post)
 	}
 
-	return images, nil
+	return posts, nil
 }

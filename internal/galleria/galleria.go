@@ -59,6 +59,14 @@ func (r SendImageRequest) Valid() (problems map[string]string) {
 	return problems
 }
 
+func (g *Galleria) Display(ctx context.Context, page uint64) ([]models.Post, error) {
+	if page == 0 {
+		page = 1
+	}
+
+	return g.imagesRepository.FindMany(ctx, page)
+}
+
 func (g *Galleria) SendImage(
 	ctx context.Context,
 	userId uuid.UUID,
