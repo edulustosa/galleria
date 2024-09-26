@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/edulustosa/galleria/internal/api"
@@ -19,8 +20,6 @@ import (
 type AuthResponse struct {
 	UserID string `json:"userId"`
 }
-
-type GenericResponse map[string]interface{}
 
 func HandleRegister(pool *pgxpool.Pool) http.HandlerFunc {
 	usersRepository := repo.NewPGXUsersRepository(pool)
@@ -147,7 +146,7 @@ func HandleGetUserImages(pool *pgxpool.Pool) http.HandlerFunc {
 			return
 		}
 
-		if err = api.Encode(w, http.StatusOK, GenericResponse{"images": images}); err != nil {
+		if err = api.Encode(w, http.StatusOK, api.JSON{"images": images}); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
@@ -176,5 +175,40 @@ func HandleUpdateProfile(pool *pgxpool.Pool) http.HandlerFunc {
 		}
 
 		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func HandleGalleria(pool *pgxpool.Pool) http.HandlerFunc {
+	galleria := factories.MakeGalleriaService(pool)
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		var page uint64 = 1
+		pageStr := r.URL.Query().Get("page")
+		if pageStr != "" {
+			p, err := strconv.ParseUint(pageStr, 10, 64)
+			if err != nil {
+				api.HandleError(w, http.StatusBadRequest, api.Error{
+					Message: "invalid page",
+					Details: "page must be a positive integer",
+				})
+				return
+			}
+			page = p
+		}
+
+		posts, err := galleria.Display(r.Context(), page)
+		if err != nil {
+			log.Printf("failed to get images: %v", err)
+			api.HandleError(
+				w,
+				http.StatusInternalServerError,
+				api.Error{Message: "something went wrong, please try again"},
+			)
+			return
+		}
+
+		if err = api.Encode(w, http.StatusOK, api.JSON{"posts": posts}); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }

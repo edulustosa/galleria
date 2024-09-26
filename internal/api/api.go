@@ -11,6 +11,8 @@ type ContextKey string
 
 const UserIDKey ContextKey = "userID"
 
+type JSON map[string]any
+
 func Encode[T any](w http.ResponseWriter, status int, data T) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)

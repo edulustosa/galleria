@@ -29,6 +29,8 @@ func addRoutes(r chi.Router, pool *pgxpool.Pool, jwtKey string) {
 	r.Post("/register", handlers.HandleRegister(pool))
 	r.Post("/login", handlers.HandleLogin(pool, jwtKey))
 
+	r.Get("/galleria", handlers.HandleGalleria(pool))
+
 	r.Group(func(r chi.Router) {
 		r.Use(middlewares.JWTAuthMiddleware([]byte(jwtKey)))
 
