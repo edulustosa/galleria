@@ -51,3 +51,11 @@ func SignUpUser(usersRepository repo.UsersRepository) (uuid.UUID, error) {
 		PasswordHash: string(hashedPassword),
 	})
 }
+
+func CreateImage(imagesRepository repo.ImagesRepository, userID uuid.UUID) (uuid.UUID, error) {
+	return imagesRepository.Create(context.Background(), &models.Image{
+		UserID: userID,
+		Title:  "image title",
+		URL:    "https://example.com/image.jpg",
+	})
+}

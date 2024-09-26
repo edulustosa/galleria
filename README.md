@@ -11,7 +11,7 @@ Trata-se de uma galeria de arte online, basicamente um clone simples do Pinteres
 - [x] Exibir informações de perfil de outros usuários (nome, bio, imagens enviadas, etc.).
 - [x] Permitir que os usuários cadastrados enviem imagens.
 - [ ] Formulário de envio com campos para título, descrição.
-- [ ] Exibir imagens em uma galeria pública.
+- [x] Exibir imagens em uma galeria pública.
 - [ ] Detalhes da imagem com título, descrição, autor e tags.
 - [ ] Permitir que usuários comentem e curtam as imagens.
 

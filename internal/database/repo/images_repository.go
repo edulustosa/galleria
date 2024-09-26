@@ -20,6 +20,13 @@ type ImagesRepository interface {
 	) ([]models.Image, error)
 
 	FindMany(ctx context.Context, page uint64) ([]models.Post, error)
+	UpdateLikes(
+		ctx context.Context,
+		commentID uuid.UUID,
+		update LikeUpdate,
+	) error
+
+	FindByID(ctx context.Context, id uuid.UUID) (*models.Image, error)
 }
 
 type PGXImagesRepository struct {
@@ -30,6 +37,33 @@ func NewPGXImagesRepository(db *pgxpool.Pool) ImagesRepository {
 	return &PGXImagesRepository{
 		db,
 	}
+}
+
+const findImageByIDQuery = "SELECT * FROM images WHERE id = $1;"
+
+func (r *PGXImagesRepository) FindByID(
+	ctx context.Context,
+	id uuid.UUID,
+) (*models.Image, error) {
+	row := r.db.QueryRow(ctx, findImageByIDQuery, id)
+
+	var image models.Image
+	err := row.Scan(
+		&image.ID,
+		&image.UserID,
+		&image.Title,
+		&image.Author,
+		&image.Description,
+		&image.URL,
+		&image.Likes,
+		&image.CreatedAt,
+		&image.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &image, nil
 }
 
 const getImagesByUserIDQuery = "SELECT * FROM images WHERE user_id = $1"
@@ -187,4 +221,19 @@ func (r *PGXImagesRepository) FindMany(
 	}
 
 	return posts, nil
+}
+
+const updateLikesImagesQuery = "UPDATE images SET likes = likes + $1 WHERE id = $2;"
+
+func (r *PGXImagesRepository) UpdateLikes(
+	ctx context.Context,
+	id uuid.UUID,
+	update LikeUpdate,
+) error {
+	_, err := r.db.Exec(ctx, updateLikesImagesQuery, update, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

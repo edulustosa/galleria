@@ -17,7 +17,8 @@ func TestGalleria_SendImage(t *testing.T) {
 
 	usersRepository := repo.NewPGXUsersRepository(pool)
 	imagesRepository := repo.NewPGXImagesRepository(pool)
-	sut := galleria.New(usersRepository, imagesRepository)
+	commentsRepository := repo.NewPGXCommentsRepository(pool)
+	sut := galleria.New(usersRepository, imagesRepository, commentsRepository)
 
 	testCtx := context.Background()
 
@@ -85,7 +86,8 @@ func TestGalleria_Display(t *testing.T) {
 
 	usersRepository := repo.NewPGXUsersRepository(pool)
 	imagesRepository := repo.NewPGXImagesRepository(pool)
-	sut := galleria.New(usersRepository, imagesRepository)
+	commentsRepository := repo.NewPGXCommentsRepository(pool)
+	sut := galleria.New(usersRepository, imagesRepository, commentsRepository)
 
 	ctx := context.Background()
 

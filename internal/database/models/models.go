@@ -42,4 +42,7 @@ type Comment struct {
 	Likes     int              `json:"likes"`
 	CreatedAt pgtype.Timestamp `json:"createdAt"`
 	UpdatedAt pgtype.Timestamp `json:"updatedAt"`
+
+	Username string  `json:"username"`
+	Avatar   *string `json:"avatar"`
 }

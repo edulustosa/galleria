@@ -11,24 +11,25 @@ import (
 )
 
 type Galleria struct {
-	usersRepository  repo.UsersRepository
-	imagesRepository repo.ImagesRepository
-	// commentsRepository repo.CommentsRepository
+	usersRepository    repo.UsersRepository
+	imagesRepository   repo.ImagesRepository
+	commentsRepository repo.CommentsRepository
 }
 
 func New(
 	usersRepository repo.UsersRepository,
 	imagesRepository repo.ImagesRepository,
-	// commentsRepository repo.CommentsRepository,
+	commentsRepository repo.CommentsRepository,
 ) *Galleria {
 	return &Galleria{
-		usersRepository:  usersRepository,
-		imagesRepository: imagesRepository,
-		// commentsRepository: commentsRepository,
+		usersRepository:    usersRepository,
+		imagesRepository:   imagesRepository,
+		commentsRepository: commentsRepository,
 	}
 }
 
 var ErrUserNotFound = errors.New("user not found")
+var ErrImageNotFound = errors.New("user not found")
 
 type SendImageRequest struct {
 	Title       string  `json:"title"`
@@ -86,4 +87,43 @@ func (g *Galleria) SendImage(
 	}
 
 	return g.imagesRepository.Create(ctx, image)
+}
+
+type AddCommentRequest struct {
+	UserID  uuid.UUID `json:"userId"`
+	ImageID uuid.UUID `json:"imageId"`
+	Content string    `json:"content"`
+}
+
+func (r AddCommentRequest) Valid() (problems map[string]string) {
+	problems = make(map[string]string)
+
+	if len(r.Content) > 500 {
+		problems["comment"] = "comment must be less than 500 characters"
+	}
+
+	return problems
+}
+
+func (g *Galleria) AddComment(
+	ctx context.Context,
+	req *AddCommentRequest,
+) (commentID uuid.UUID, err error) {
+	_, err = g.usersRepository.FindByID(ctx, req.UserID)
+	if err != nil {
+		return uuid.Nil, ErrUserNotFound
+	}
+
+	_, err = g.imagesRepository.FindByID(ctx, req.ImageID)
+	if err != nil {
+		return uuid.Nil, ErrImageNotFound
+	}
+
+	comment := &models.Comment{
+		UserID:  req.UserID,
+		ImageID: req.ImageID,
+		Content: req.Content,
+	}
+
+	return g.commentsRepository.Create(ctx, comment)
 }
