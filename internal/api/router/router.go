@@ -30,6 +30,7 @@ func addRoutes(r chi.Router, pool *pgxpool.Pool, jwtKey string) {
 	r.Post("/login", handlers.HandleLogin(pool, jwtKey))
 
 	r.Get("/galleria", handlers.HandleGalleria(pool))
+	r.Get("/galleria/posts/{postId}/comments", handlers.HandlePostComments(pool))
 
 	r.Group(func(r chi.Router) {
 		r.Use(middlewares.JWTAuthMiddleware([]byte(jwtKey)))
@@ -37,5 +38,7 @@ func addRoutes(r chi.Router, pool *pgxpool.Pool, jwtKey string) {
 		r.Get("/profile", handlers.HandleGetUserProfile(pool))
 		r.Get("/profile/images", handlers.HandleGetUserImages(pool))
 		r.Patch("/profile", handlers.HandleUpdateProfile(pool))
+
+		r.Post("/galleria/posts/{postId}", handlers.HandleAddComment(pool))
 	})
 }

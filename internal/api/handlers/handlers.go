@@ -11,7 +11,9 @@ import (
 	"github.com/edulustosa/galleria/internal/auth"
 	"github.com/edulustosa/galleria/internal/database/repo"
 	"github.com/edulustosa/galleria/internal/factories"
+	"github.com/edulustosa/galleria/internal/galleria"
 	"github.com/edulustosa/galleria/internal/profile"
+	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -208,6 +210,97 @@ func HandleGalleria(pool *pgxpool.Pool) http.HandlerFunc {
 		}
 
 		if err = api.Encode(w, http.StatusOK, api.JSON{"posts": posts}); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+}
+
+type AddCommentRequest struct {
+	Comment string `json:"comment"`
+}
+
+func (r AddCommentRequest) Valid() (problems map[string]string) {
+	problems = make(map[string]string)
+
+	if len(r.Comment) > 500 {
+		problems["comment"] = "comment must be less than 500 characters"
+	}
+
+	return
+}
+
+func HandleAddComment(pool *pgxpool.Pool) http.HandlerFunc {
+	galleriaService := factories.MakeGalleriaService(pool)
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID := r.Context().Value(api.UserIDKey).(uuid.UUID)
+		postId, err := uuid.Parse(chi.URLParam(r, "postId"))
+		if err != nil {
+			api.HandleError(w, http.StatusBadRequest, api.Error{
+				Message: "invalid post id",
+				Details: "post id must be a valid UUID",
+			})
+			return
+		}
+
+		req, problems, err := api.DecodeValid[AddCommentRequest](r)
+		if err != nil {
+			api.HandleInvalidRequest(w, problems)
+			return
+		}
+
+		commentID, err := galleriaService.AddComment(r.Context(), userID, postId, req.Comment)
+		if err != nil {
+			if errors.Is(err, galleria.ErrImageNotFound) || errors.Is(err, galleria.ErrUserNotFound) {
+				api.HandleError(w, http.StatusNotFound, api.Error{Message: err.Error()})
+				return
+			}
+
+			log.Printf("failed to add comment: %v", err)
+			api.HandleError(
+				w,
+				http.StatusInternalServerError,
+				api.Error{Message: "something went wrong, please try again"},
+			)
+			return
+		}
+
+		if err := api.Encode(w, http.StatusCreated, api.JSON{"commentId": commentID}); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+}
+
+func HandlePostComments(pool *pgxpool.Pool) http.HandlerFunc {
+	galleriaService := factories.MakeGalleriaService(pool)
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		postId, err := uuid.Parse(chi.URLParam(r, "postId"))
+		if err != nil {
+			api.HandleError(w, http.StatusBadRequest, api.Error{
+				Message: "invalid post id",
+				Details: "post id must be a valid UUID",
+			})
+			return
+		}
+
+		comments, err := galleriaService.GetComments(r.Context(), postId)
+		if err != nil {
+			if errors.Is(err, galleria.ErrImageNotFound) {
+				api.HandleError(w, http.StatusNotFound, api.Error{Message: err.Error()})
+				return
+			}
+
+			log.Printf("failed to get comments: %v", err)
+			api.HandleError(
+				w,
+				http.StatusInternalServerError,
+				api.Error{Message: "something went wrong, please try again"},
+			)
+			return
+		}
+
+		if err = api.Encode(w, http.StatusOK, api.JSON{"comments": comments}); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}

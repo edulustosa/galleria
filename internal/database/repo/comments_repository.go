@@ -8,13 +8,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type LikeUpdate int8
-
-const (
-	Increment LikeUpdate = 1
-	Decrement LikeUpdate = -1
-)
-
 type CommentsRepository interface {
 	Create(ctx context.Context, comment *models.Comment) (uuid.UUID, error)
 	FindByID(ctx context.Context, commentID uuid.UUID) (*models.Comment, error)
@@ -23,12 +16,6 @@ type CommentsRepository interface {
 		ctx context.Context,
 		imageID uuid.UUID,
 	) ([]models.Comment, error)
-
-	UpdateLikes(
-		ctx context.Context,
-		commentID uuid.UUID,
-		update LikeUpdate,
-	) error
 }
 
 type PGXCommentsRepository struct {
@@ -51,7 +38,6 @@ func (r *PGXCommentsRepository) FindByID(
 		&comment.UserID,
 		&comment.ImageID,
 		&comment.Content,
-		&comment.Likes,
 		&comment.CreatedAt,
 		&comment.UpdatedAt,
 	)
@@ -93,12 +79,10 @@ const findCommentsByImageIDQuery = `
 		comments.user_id,
 		comments.image_id,
 		comments.content,
-		comments.likes,
 		users.username,
 		users.profile_picture_url
 	FROM comments
 	JOIN users ON comments.user_id = users.id
-	ORDER BY comments.likes
 	WHERE comments.image_id = $1;
 `
 
@@ -121,7 +105,6 @@ func (r *PGXCommentsRepository) FindByImageID(
 			&comment.UserID,
 			&comment.ImageID,
 			&comment.Content,
-			&comment.Likes,
 			&comment.Username,
 			&comment.Avatar,
 		)
@@ -133,19 +116,4 @@ func (r *PGXCommentsRepository) FindByImageID(
 	}
 
 	return comments, nil
-}
-
-const updateLikesQuery = "UPDATE comments SET likes = likes + $1 WHERE id = $2;"
-
-func (r *PGXCommentsRepository) UpdateLikes(
-	ctx context.Context,
-	commentID uuid.UUID,
-	update LikeUpdate,
-) error {
-	_, err := r.pool.Exec(ctx, updateLikesQuery, update, commentID)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

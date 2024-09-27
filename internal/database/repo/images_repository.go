@@ -20,12 +20,6 @@ type ImagesRepository interface {
 	) ([]models.Image, error)
 
 	FindMany(ctx context.Context, page uint64) ([]models.Post, error)
-	UpdateLikes(
-		ctx context.Context,
-		commentID uuid.UUID,
-		update LikeUpdate,
-	) error
-
 	FindByID(ctx context.Context, id uuid.UUID) (*models.Image, error)
 }
 
@@ -55,7 +49,6 @@ func (r *PGXImagesRepository) FindByID(
 		&image.Author,
 		&image.Description,
 		&image.URL,
-		&image.Likes,
 		&image.CreatedAt,
 		&image.UpdatedAt,
 	)
@@ -89,7 +82,7 @@ func (r *PGXImagesRepository) GetImagesByUserID(
 			&image.Author,
 			&image.Description,
 			&image.URL,
-			&image.Likes,
+
 			&image.CreatedAt,
 			&image.UpdatedAt,
 		)
@@ -149,7 +142,6 @@ func (r *PGXImagesRepository) GetImageByID(
 		&image.Author,
 		&image.Description,
 		&image.URL,
-		&image.Likes,
 		&image.CreatedAt,
 		&image.UpdatedAt,
 	)
@@ -168,14 +160,12 @@ const findManyQuery = `
 		images.author,
 		images.description,
 		images.url,
-		images.likes,
 		images.created_at,
 		images.updated_at,
 		users.username,
 		users.profile_picture_url
 	FROM images
 	JOIN users ON images.user_id = users.id
-	ORDER BY images.likes
 	LIMIT $1
 	OFFSET $2;
 `
@@ -206,7 +196,6 @@ func (r *PGXImagesRepository) FindMany(
 			&image.Author,
 			&image.Description,
 			&image.URL,
-			&image.Likes,
 			&image.CreatedAt,
 			&image.UpdatedAt,
 			&post.Username,
@@ -221,19 +210,4 @@ func (r *PGXImagesRepository) FindMany(
 	}
 
 	return posts, nil
-}
-
-const updateLikesImagesQuery = "UPDATE images SET likes = likes + $1 WHERE id = $2;"
-
-func (r *PGXImagesRepository) UpdateLikes(
-	ctx context.Context,
-	id uuid.UUID,
-	update LikeUpdate,
-) error {
-	_, err := r.db.Exec(ctx, updateLikesImagesQuery, update, id)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

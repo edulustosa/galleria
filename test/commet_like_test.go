@@ -36,13 +36,9 @@ func TestComment(t *testing.T) {
 			t.Fatalf("failed to create image: %v", err)
 		}
 
-		req := &galleria.AddCommentRequest{
-			UserID:  userID,
-			ImageID: imageID,
-			Content: "this is a comment",
-		}
+		comm := "this is a comment"
 
-		commentID, err := sut.AddComment(ctx, req)
+		commentID, err := sut.AddComment(ctx, userID, imageID, comm)
 		if err != nil {
 			t.Errorf("failed to add comment: %v", err)
 		}
@@ -52,8 +48,8 @@ func TestComment(t *testing.T) {
 			t.Fatalf("failed to find comment: %v", err)
 		}
 
-		if comment.Content != req.Content {
-			t.Errorf("expected comment content to be %s, got %s", req.Content, comment.Content)
+		if comment.Content != comm {
+			t.Errorf("expected comment content to be %s, got %s", comm, comment.Content)
 		}
 
 		PrettyPrint(comment)

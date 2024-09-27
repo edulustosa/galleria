@@ -89,41 +89,38 @@ func (g *Galleria) SendImage(
 	return g.imagesRepository.Create(ctx, image)
 }
 
-type AddCommentRequest struct {
-	UserID  uuid.UUID `json:"userId"`
-	ImageID uuid.UUID `json:"imageId"`
-	Content string    `json:"content"`
-}
-
-func (r AddCommentRequest) Valid() (problems map[string]string) {
-	problems = make(map[string]string)
-
-	if len(r.Content) > 500 {
-		problems["comment"] = "comment must be less than 500 characters"
-	}
-
-	return problems
-}
-
 func (g *Galleria) AddComment(
 	ctx context.Context,
-	req *AddCommentRequest,
+	userID, postId uuid.UUID,
+	content string,
 ) (commentID uuid.UUID, err error) {
-	_, err = g.usersRepository.FindByID(ctx, req.UserID)
+	_, err = g.usersRepository.FindByID(ctx, userID)
 	if err != nil {
 		return uuid.Nil, ErrUserNotFound
 	}
 
-	_, err = g.imagesRepository.FindByID(ctx, req.ImageID)
+	_, err = g.imagesRepository.FindByID(ctx, postId)
 	if err != nil {
 		return uuid.Nil, ErrImageNotFound
 	}
 
 	comment := &models.Comment{
-		UserID:  req.UserID,
-		ImageID: req.ImageID,
-		Content: req.Content,
+		UserID:  userID,
+		ImageID: postId,
+		Content: content,
 	}
 
 	return g.commentsRepository.Create(ctx, comment)
+}
+
+func (g *Galleria) GetComments(
+	ctx context.Context,
+	imageID uuid.UUID,
+) ([]models.Comment, error) {
+	_, err := g.imagesRepository.FindByID(ctx, imageID)
+	if err != nil {
+		return nil, ErrImageNotFound
+	}
+
+	return g.commentsRepository.FindByImageID(ctx, imageID)
 }

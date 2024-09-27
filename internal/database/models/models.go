@@ -23,7 +23,6 @@ type Image struct {
 	Author      *string          `json:"author"`
 	Description *string          `json:"description"`
 	URL         string           `json:"url"`
-	Likes       int              `json:"likes"`
 	CreatedAt   pgtype.Timestamp `json:"createdAt"`
 	UpdatedAt   pgtype.Timestamp `json:"updatedAt"`
 }
@@ -39,7 +38,6 @@ type Comment struct {
 	UserID    uuid.UUID        `json:"userId"`
 	ImageID   uuid.UUID        `json:"imageId"`
 	Content   string           `json:"content"`
-	Likes     int              `json:"likes"`
 	CreatedAt pgtype.Timestamp `json:"createdAt"`
 	UpdatedAt pgtype.Timestamp `json:"updatedAt"`
 
