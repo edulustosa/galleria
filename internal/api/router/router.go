@@ -40,5 +40,6 @@ func addRoutes(r chi.Router, pool *pgxpool.Pool, jwtKey string) {
 		r.Patch("/profile", handlers.HandleUpdateProfile(pool))
 
 		r.Post("/galleria/posts/{postId}", handlers.HandleAddComment(pool))
+		r.Post("/galleria", handlers.HandleAddPost(pool))
 	})
 }

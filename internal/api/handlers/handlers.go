@@ -215,6 +215,39 @@ func HandleGalleria(pool *pgxpool.Pool) http.HandlerFunc {
 	}
 }
 
+func HandleAddPost(pool *pgxpool.Pool) http.HandlerFunc {
+	galleriaService := factories.MakeGalleriaService(pool)
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		userId := r.Context().Value(api.UserIDKey).(uuid.UUID)
+		req, problems, err := api.DecodeValid[galleria.SendImageRequest](r)
+		if err != nil {
+			api.HandleInvalidRequest(w, problems)
+			return
+		}
+
+		postId, err := galleriaService.SendImage(r.Context(), userId, &req)
+		if err != nil {
+			if errors.Is(err, galleria.ErrUserNotFound) {
+				api.HandleError(w, http.StatusNotFound, api.Error{Message: err.Error()})
+				return
+			}
+
+			log.Printf("failed to add post: %v", err)
+			api.HandleError(
+				w,
+				http.StatusInternalServerError,
+				api.Error{Message: "something went wrong, please try again"},
+			)
+			return
+		}
+
+		if err := api.Encode(w, http.StatusCreated, api.JSON{"postId": postId}); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+}
+
 type AddCommentRequest struct {
 	Comment string `json:"comment"`
 }
