@@ -11,6 +11,21 @@ services:
       POSTGRESQL_DATABASE: ${DATABASE_NAME}
     volumes:
       - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: galleria-api
+    ports:
+      - 8080:8080
+    command: ['./galleria']
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   db:
